@@ -7,6 +7,7 @@
 #include "iostream"
 #include "vector"
 #include "map"
+#include "cassert"
 using namespace std;
 
 class CFG {
@@ -14,8 +15,27 @@ class CFG {
     vector<string> terminals;
     map<string, string> replacementRules;
     string startSymbol;
+    CFG* init;
 public:
+    CFG();
 
+    bool properlyInitialised();
+
+    const vector<string> & getNonTerminals();
+
+    void setNonTerminals(const vector<string> &nonTerminals);
+
+    const vector<string> & getTerminals();
+
+    void setTerminals(const vector<string> &terminals);
+
+    const map<string, string> & getReplacementRules();
+
+    void setReplacementRules(const map<string, string> &replacementRules);
+
+    const string & getStartSymbol();
+
+    void setStartSymbol(const string &startSymbol);
 };
 
 

@@ -1,3 +1,4 @@
 C:/Users/Samue/Documents/GitHub/MB/cmake-build-debug/CMakeFiles/MB.dir
+C:/Users/Samue/Documents/GitHub/MB/cmake-build-debug/CMakeFiles/MB_debug.dir
 C:/Users/Samue/Documents/GitHub/MB/cmake-build-debug/CMakeFiles/edit_cache.dir
 C:/Users/Samue/Documents/GitHub/MB/cmake-build-debug/CMakeFiles/rebuild_cache.dir
