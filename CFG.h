@@ -8,12 +8,13 @@
 #include "vector"
 #include "map"
 #include "cassert"
+#include "algorithm"
 using namespace std;
 
 class CFG {
     vector<string> nonTerminals;
     vector<string> terminals;
-    map<string, string> replacementRules;
+    vector<pair<string, vector<string>>> replacementRules;
     string startSymbol;
     CFG* init;
 public:
@@ -29,13 +30,15 @@ public:
 
     void setTerminals(const vector<string> &terminals);
 
-    const map<string, string> & getReplacementRules();
+    const vector<pair<string, vector<string>>> & getReplacementRules();
 
-    void setReplacementRules(const map<string, string> &replacementRules);
+    void setReplacementRules(const vector<pair<string, vector<string>>> &replacementRules);
 
     const string & getStartSymbol();
 
     void setStartSymbol(const string &startSymbol);
+
+    vector<string> print();
 };
 
 
