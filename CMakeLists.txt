@@ -11,12 +11,16 @@ include_directories(./gtest/include)
 link_directories(./gtest/lib)
 
 # Set source files for RELEASE target
-set(RELEASE_SOURCE_FILES CFG.cpp main.cpp)
+set(RELEASE_SOURCE_FILES CFG.cpp main.cpp
+        Production.cpp
+        Production.h)
 
 # Set source files for DEBUG target
 set(DEBUG_SOURCE_FILES
         CFG.cpp
         MBTests.cpp
+        Production.cpp
+
 )
 
 # Create RELEASE target

@@ -1,4 +1,4 @@
-ToolSet: w64 6.0 (local)@C:\Qt\Tools\mingw810_64
+ToolSet: w64 11.0 (local)@C:\Users\Samue\AppData\Local\Programs\CLion\bin\mingw
 Options: 
 
-Options:-DCMAKE_MAKE_PROGRAM=D:/JetBrains/CLion 2022.3.2/bin/ninja/win/x64/ninja.exe
+Options:-DCMAKE_MAKE_PROGRAM=C:/Users/Samue/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe
