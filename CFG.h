@@ -54,6 +54,6 @@ public:
     vector<string> print();
 };
 
-vector<Production*> sort(const vector<Production*>& prod);
+vector<Production*> sortProds(const vector<Production*>& prods);
 
 #endif //MB_CFG_H

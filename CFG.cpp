@@ -41,11 +41,17 @@ CFG::CFG(const string &name){
     for (string var: j["Variables"]){
         this->addNonTerminal(var);
     }
+    vector<string> nonTerms = this->getNonTerminals();
+    std::sort(nonTerms.begin(), nonTerms.end());
+    this->setNonTerminals(nonTerms);
 
     // Alle Terminals toevoegen
     for (string term: j["Terminals"]){
         this->addTerminal(term);
     }
+    auto terms = this->getTerminals();
+    std::sort(terms.begin(), terms.end());
+    this->setTerminals(terms);
 
     // Alle productions toevoegen
     for (auto prod: j["Productions"]){
@@ -56,7 +62,7 @@ CFG::CFG(const string &name){
         }
         this->addProduction(new Production(head, body));
     }
-    this->setProductions(sort(this->getProductions()));
+    this->setProductions(sortProds(this->getProductions()));
 
 
     // Startsymbool toevoegen
@@ -204,7 +210,7 @@ void CFG::addProduction(Production *prod) {
     assert(this->getProductions()[this->getProductions().size() - 1] == prod);
 }
 
-vector<Production *> sort(const vector<Production*>& prods) {
+vector<Production *> sortProds(const vector<Production*>& prods) {
     vector<string> sortStrings;
     for (auto production: prods){
         sortStrings.push_back(production->getSortString());

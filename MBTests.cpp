@@ -63,9 +63,9 @@ TEST_F(MBTest, test2){
     CFG cfg("test2.json");
     EXPECT_TRUE(cfg.properlyInitialised());
     EXPECT_TRUE(cfg.getStartSymbol() == "S");
-    vector<string> nonTerms = {"S", "BINDIGIT"};
+    vector<string> nonTerms = {"BINDIGIT", "S"};
     EXPECT_TRUE(cfg.getNonTerminals() == nonTerms);
-    vector<string> terms = {"a", "b","0", "1"};
+    vector<string> terms = {"0", "1", "a", "b"};
     EXPECT_TRUE(cfg.getTerminals() == terms);
     vector<string> body1 = {"a", "S", "b","BINDIGIT"};
     EXPECT_TRUE(cfg.getProductions()[3]->getHead() == "S");
