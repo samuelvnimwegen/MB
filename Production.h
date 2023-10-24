@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] const vector<string> &getBody() const;
 
-    string getSortString() const;
+    [[nodiscard]] string getSortString() const;
 
 };
 

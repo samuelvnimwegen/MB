@@ -216,15 +216,38 @@ CFG CFG::toCNF() {
     CNF.print();
     cout << endl << "-------------------------------------" << endl << endl;
     cout << " >> Eliminating epsilon productions" << endl;
-
+    CNF.removeNullable();
     return CNF;
 }
 
 void CFG::removeNullable() {
+    // Vector met alle nullable terminals maken
     vector<string> nullableTerminals;
-    for (auto terminal: this->getNonTerminals()){
-
+    for (const auto& terminal: this->getNonTerminals()){
+        if (isNullable({terminal})){
+            nullableTerminals.push_back(terminal);
+        }
     }
+    // Nullables printen
+    cout << "  Nullables are {";
+    for (int i = 0; i < nullableTerminals.size() - 1; ++i){
+        cout << nullableTerminals[i] << ", ";
+    }
+    if (!nullableTerminals.empty()){
+        cout << nullableTerminals[nullableTerminals.size() - 1];
+    }
+    cout << "}";
+
+    // Alle producties die op epsilon uitkomen verwijderen
+    for (int i = 0; i < this->getProductions().size(); ++i){
+        if (this->getProductions()[i]->getBody().empty()){
+            productions.erase(productions.begin() + i);
+            --i;
+        }
+    }
+
+    // Alle producties die een nullable in hun body hebben aanpassen.
+
 }
 
 bool CFG::isNullable(vector<string> inputString) {
