@@ -80,6 +80,17 @@ TEST_F(MBTest, test2){
     EXPECT_TRUE(cfg.getProductions()[1]->getHead() == "BINDIGIT");
     EXPECT_TRUE(cfg.getProductions()[1]->getBody() == body4);
 }
+
+TEST_F(MBTest, nullableTest){
+    CFG cfg("input-cnf1.json");
+    EXPECT_TRUE(cfg.isNullable({"S"}));
+    EXPECT_TRUE(cfg.isNullable({"A"}));
+    EXPECT_TRUE(cfg.isNullable({"B"}));
+    EXPECT_TRUE(cfg.isNullable({"C"}));
+    EXPECT_TRUE(cfg.isNullable({"D"}));
+    EXPECT_FALSE(cfg.isNullable({"E"}));
+}
+
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

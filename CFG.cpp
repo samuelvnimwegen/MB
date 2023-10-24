@@ -220,6 +220,36 @@ CFG CFG::toCNF() {
     return CNF;
 }
 
+void CFG::removeNullable() {
+    vector<string> nullableTerminals;
+    for (auto terminal: this->getNonTerminals()){
+
+    }
+}
+
+bool CFG::isNullable(vector<string> inputString) {
+    if (inputString.empty()){
+        return true;
+    }
+    // Leftmost character van de string
+    auto leftmost = inputString[0];
+    for (auto production:getProductions()){
+        // Als de productie uit de leftmost volgt en niet zichzelf bevat
+        if (production->getHead() == leftmost and
+                !std::count(production->getBody().begin(), production->getBody().end(), leftmost)){
+            // We maken de nieuwe string: nieuwe body + inputString zonder leftmost variable
+            auto newInput = production->getBody();
+            newInput.insert(newInput.end(), inputString.begin() + 1, inputString.end());
+
+            // Als deze nieuwe string nullable is: return true
+            if (isNullable(newInput)){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 vector<Production *> sortProds(const vector<Production*>& prods) {
     vector<string> sortStrings;
     for (auto production: prods){

@@ -29,6 +29,10 @@ public:
 
     CFG toCNF();
 
+    void removeNullable();
+
+    bool isNullable(vector<string> inputString);
+
     bool properlyInitialised();
 
     const vector<string> & getNonTerminals();
