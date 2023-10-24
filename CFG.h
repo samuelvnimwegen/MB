@@ -27,6 +27,8 @@ public:
 
     explicit CFG(const string &name);
 
+    CFG toCNF();
+
     bool properlyInitialised();
 
     const vector<string> & getNonTerminals();

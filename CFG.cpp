@@ -210,6 +210,16 @@ void CFG::addProduction(Production *prod) {
     assert(this->getProductions()[this->getProductions().size() - 1] == prod);
 }
 
+CFG CFG::toCNF() {
+    CFG CNF = CFG(this->filename)   ;
+    cout << "Original CFG:" << endl << endl;
+    CNF.print();
+    cout << endl << "-------------------------------------" << endl << endl;
+    cout << " >> Eliminating epsilon productions" << endl;
+
+    return CNF;
+}
+
 vector<Production *> sortProds(const vector<Production*>& prods) {
     vector<string> sortStrings;
     for (auto production: prods){
