@@ -81,7 +81,7 @@ TEST_F(MBTest, test2){
     EXPECT_TRUE(cfg.getProductions()[1]->getBody() == body4);
 }
 
-TEST_F(MBTest, nullableTest){
+TEST_F(MBTest, isNullableTest){
     CFG cfg("input-cnf1.json");
     EXPECT_TRUE(cfg.isNullable({"S"}));
     EXPECT_TRUE(cfg.isNullable({"A"}));

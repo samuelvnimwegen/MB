@@ -128,6 +128,7 @@ bool CFG::properlyInitialised() {
 }
 
 vector<string> CFG::print() {
+    this->setProductions(sortProds(this->getProductions()));
     vector<string> output;
 
     // Non-terminals
@@ -217,6 +218,9 @@ CFG CFG::toCNF() {
     cout << endl << "-------------------------------------" << endl << endl;
     cout << " >> Eliminating epsilon productions" << endl;
     CNF.removeNullable();
+    cout <<"  Created " << CNF.getProductions().size() <<" productions, original had " << this->getProductions().size()
+    << endl << endl;
+    CNF.print();
     return CNF;
 }
 
@@ -236,7 +240,7 @@ void CFG::removeNullable() {
     if (!nullableTerminals.empty()){
         cout << nullableTerminals[nullableTerminals.size() - 1];
     }
-    cout << "}";
+    cout << "}" << endl;
 
     // Alle producties die op epsilon uitkomen verwijderen
     for (int i = 0; i < this->getProductions().size(); ++i){
@@ -245,8 +249,24 @@ void CFG::removeNullable() {
             --i;
         }
     }
+    // Extra producties toevoegen
+    for (auto production: this->getProductions()){
+        // Alle subsets maken
+        vector<vector<string>> subsets;
+        makeNullableSubsets(subsets, nullableTerminals, production->getBody());
 
-    // Alle producties die een nullable in hun body hebben aanpassen.
+        // Als er meer dan 1 subset gemaakt kan worden, elk van deze bodies toevoegen.
+        if (subsets.size() > 1){
+            // Eerste body is al aanwezig, dus we beginnen bij de 2de (index 1)
+            for (int i = 1; i < subsets.size(); ++i){
+                addProduction(new Production(production->getHead(), subsets[i]));
+            }
+        }
+    }
+
+
+
+
 
 }
 
@@ -289,4 +309,27 @@ vector<Production *> sortProds(const vector<Production*>& prods) {
         }
     }
     return newProds;
+}
+
+void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current) {
+    assert(!current.empty());
+    // Checken of current niet al in de subsets verzameling zit
+    for (const auto& subset: subsets){
+        if (subset == current){
+            return;
+        }
+    }
+    subsets.push_back(current);
+    if (current.size() == 1){
+        return;
+    }
+
+    for (int i = 0; i < current.size(); ++i){
+        // Als het character nullable is
+        if (std::count(nullables.begin(), nullables.end(), current[i])){
+            auto copy = current;
+            copy.erase(copy.begin() + i);
+            makeNullableSubsets(subsets, nullables, copy);
+        }
+    }
 }

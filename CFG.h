@@ -62,4 +62,6 @@ public:
 
 vector<Production*> sortProds(const vector<Production*>& prods);
 
+void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current);
+
 #endif //MB_CFG_H
