@@ -38,6 +38,10 @@ public:
 
     void removeUseless();
 
+    void replaceBadBodies();
+
+    void breakBodies();
+
     bool isNullable(vector<string> inputString);
 
     vector<string> print();

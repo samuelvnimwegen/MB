@@ -215,18 +215,21 @@ CFG CFG::toCNF() {
     cout << "Original CFG:" << endl << endl;
     CNF.print();
     cout << endl << "-------------------------------------" << endl << endl;
+
     cout << " >> Eliminating epsilon productions" << endl;
     CNF.removeNullable();
     cout <<"  Created " << CNF.getProductions().size() <<" productions, original had " << this->getProductions().size()
     << endl << endl;
     CNF.print();
     int productionAmount = int(CNF.getProductions().size());
+
     cout << endl << " >> Eliminating unit pairs" << endl;
     CNF.removeUnitPairs();
     cout << "  Created " << CNF.getProductions().size() << " new productions, original had " << productionAmount <<  endl << endl;
     CNF.print();
-    cout << endl << endl;
+    cout << endl;
     productionAmount = int(CNF.getProductions().size());
+
     cout << " >> Eliminating useless symbols" << endl;
     CNF.removeUseless();
     cout << "  Removed " << this->getNonTerminals().size() - CNF.getNonTerminals().size() << " variables, " <<
@@ -234,8 +237,16 @@ CFG CFG::toCNF() {
     <<" productions" << endl << endl;
     CNF.print();
     cout << endl;
-    cout << " >> Replacing terminals in bad bodies" << endl;
+    productionAmount = int(CNF.getProductions().size());
 
+    cout << " >> Replacing terminals in bad bodies" << endl;
+    CNF.replaceBadBodies();
+    cout << "  Created "<< CNF.getProductions().size() <<" new productions, original had " << productionAmount << endl;
+    CNF.print();
+    cout << endl;
+    productionAmount = int(CNF.getProductions().size());
+
+    CNF.breakBodies();
 
     return CNF;
 }
@@ -481,6 +492,57 @@ void CFG::removeUseless() {
     this->setNonTerminals(newNonTerms);
 }
 
+void CFG::replaceBadBodies() {
+    // Beginnen met alle bodies >= 2 met alleen variabelen te schrijven.
+    vector<Production> newProds;
+    vector<string> newVars = this->getNonTerminals();
+    vector<string> newVarsWithoutOld;
+    for (const auto& production: this->getProductions()){
+        if (production.getBody().size() >= 2){
+            vector<string> newBody;
+            for (const auto& sym: production.getBody()){
+                // Als er een symbool is dat een terminal is:
+                if (std::count(this->getTerminals().begin(), this->getTerminals().end(), sym)){
+                    bool alreadyProd = false;
+                    for (const auto& prd: this->getProductions()){
+                        // Als er al een productie is de rechtstreeks op het symbool uitkomt gebruiken we deze
+                        if (prd.getBody().size() == 1 and prd.getBody()[0] == sym){
+                            newBody.push_back(prd.getHead());
+                            alreadyProd = true;
+                        }
+                    }
+                    // Als er nog geen productie is in de vorige CFG, _x toevoegen aan de nieuwe body.
+                    if (!alreadyProd){
+                        newBody.push_back("_" + sym);
+                        // Als de variabele nog niet aangemaakt is: deze aanmaken samen met de productie
+                        if (!std::count(newVars.begin(), newVars.end(), "_" + sym)){
+                            newProds.push_back(Production("_" + sym, {sym}));
+                            newVars.push_back("_" + sym);
+                            newVarsWithoutOld.push_back("_" + sym);
+                        }
+                    }
+                }
+                // Als het symbool een variabele is
+                else{
+                    newBody.push_back(sym);
+                }
+            }
+            newProds.emplace_back(production.getHead(), newBody);
+        }
+        else{
+            newProds.push_back(production);
+        }
+    }
+    this->setProductions(removeDupes(sortProds(newProds)));
+    std::sort(newVars.begin(), newVars.end());
+    cout << "  Added "<< newVarsWithoutOld.size() <<" new variables: ";
+    printVector(newVarsWithoutOld);
+}
+
+void CFG::breakBodies() {
+
+}
+
 vector<Production> sortProds(const vector<Production> &prods) {
     vector<string> sortStrings;
     for (const auto& production: prods){
@@ -537,8 +599,10 @@ void printVector(const vector<string> &items) {
     for (const auto& sym: items){
         outString += sym + ", ";
     }
-    outString.pop_back();
-    outString.pop_back();
+    if (!items.empty()){
+        outString.pop_back();
+        outString.pop_back();
+    }
     outString += "}";
     cout << outString << endl;
 }
