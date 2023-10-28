@@ -18,8 +18,12 @@ const vector<string> &Production::getBody() const {
 
 string Production::getSortString() const {
     string out = this->getHead();
+    out += " -> '";
+
     for (const auto& ch: this->getBody()){
-        out += ch;
+        out += ch + " ";
     }
+    out.pop_back();
+    out += "'";
     return out;
 }

@@ -11,14 +11,14 @@ CFG::CFG() {
     setNonTerminals({"BINDIGIT", "S"});
     setTerminals({"0", "1", "a", "b"});
     setStartSymbol({"S"});
-    vector<Production*> replacements;
-    auto prod1 = new Production("BINDIGIT", {"0"});
+    vector<Production> replacements;
+    auto prod1 = Production("BINDIGIT", {"0"});
     replacements.push_back(prod1);
-    auto prod2 = new Production("BINDIGIT", {"1"});
+    auto prod2 = Production("BINDIGIT", {"1"});
     replacements.push_back(prod2);
-    auto prod3 = new Production("S", {});
+    auto prod3 = Production("S", {});
     replacements.push_back(prod3);
-    auto prod4 = new Production("S", {"a", "S", "b", "BINDIGIT"});
+    auto prod4 = Production("S", {"a", "S", "b", "BINDIGIT"});
     replacements.push_back(prod4);
     setProductions(replacements);
 }
@@ -60,7 +60,7 @@ CFG::CFG(const string &name){
         for (string ch: prod["body"]){
             body.push_back(ch);
         }
-        this->addProduction(new Production(head, body));
+        this->addProduction(Production(head, body));
     }
     this->setProductions(sortProds(this->getProductions()));
 
@@ -69,7 +69,6 @@ CFG::CFG(const string &name){
     string start = j["Start"];
     this->setStartSymbol(start);
 }
-
 
 const vector<string> & CFG::getNonTerminals() {
     assert(this->properlyInitialised());
@@ -95,17 +94,16 @@ void CFG::setTerminals(const vector<string> &term) {
     assert(this->getTerminals() == term);
 }
 
-const vector<Production*> & CFG::getProductions() {
+const vector<Production> & CFG::getProductions() {
     assert(this->properlyInitialised());
     assert(!this->productions.empty());
     return this->productions;
 }
 
-void CFG::setProductions(const vector<Production*> &rules) {
+void CFG::setProductions(const vector<Production> &rules) {
     assert(this->properlyInitialised());
     assert(!rules.empty());
     this->productions = rules;
-    assert(this->getProductions() == rules);
 }
 
 const string & CFG::getStartSymbol() {
@@ -129,6 +127,7 @@ bool CFG::properlyInitialised() {
 
 vector<string> CFG::print() {
     this->setProductions(sortProds(this->getProductions()));
+    this->setProductions(removeDupes(this->getProductions()));
     vector<string> output;
 
     // Non-terminals
@@ -156,12 +155,12 @@ vector<string> CFG::print() {
     output.push_back(transBegin);
     cout << transBegin << endl;
     for (const auto& rep: this->getProductions()){
-        string repString = "    ";
-        repString += rep->getHead() + " -> `";
-        for (const auto& sym: rep->getBody()){
+        string repString = "  ";
+        repString += rep.getHead() + " -> `";
+        for (const auto& sym: rep.getBody()){
             repString += sym + " ";
         }
-        if (!rep->getBody().empty()){
+        if (!rep.getBody().empty()){
             repString.pop_back();
         }
         repString += "`";
@@ -199,16 +198,16 @@ void CFG::addNonTerminal(const string &term) {
     assert(this->getNonTerminals()[this->getNonTerminals().size() - 1] == term);
 }
 
-void CFG::addProduction(Production *prod) {
+void CFG::addProduction(const Production& prod) {
+    assert(!prod.getHead().empty());
     assert(this->properlyInitialised());
-    assert(std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(),prod->getHead()));
-    for (const auto& ch: prod->getBody()){
+    assert(std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(),prod.getHead()));
+    for (const auto& ch: prod.getBody()){
         bool charInSystem = std::count(this->getTerminals().begin(), this->getTerminals().end(),ch) or
                 std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), ch);
         assert(charInSystem);
     }
-    this->productions.push_back(prod);
-    assert(this->getProductions()[this->getProductions().size() - 1] == prod);
+    productions.push_back(prod);
 }
 
 CFG CFG::toCNF() {
@@ -221,6 +220,12 @@ CFG CFG::toCNF() {
     cout <<"  Created " << CNF.getProductions().size() <<" productions, original had " << this->getProductions().size()
     << endl << endl;
     CNF.print();
+    int productionAmount = int(CNF.getProductions().size());
+    cout << endl << " >> Eliminating unit pairs" << endl;
+    CNF.removeUnitPairs();
+    cout << "  Created " << CNF.getProductions().size() << " new productions, original had " << productionAmount <<  endl << endl;
+    CNF.print();
+
     return CNF;
 }
 
@@ -244,22 +249,22 @@ void CFG::removeNullable() {
 
     // Alle producties die op epsilon uitkomen verwijderen
     for (int i = 0; i < this->getProductions().size(); ++i){
-        if (this->getProductions()[i]->getBody().empty()){
+        if (this->getProductions()[i].getBody().empty()){
             productions.erase(productions.begin() + i);
             --i;
         }
     }
     // Extra producties toevoegen
-    for (auto production: this->getProductions()){
+    for (const auto& production: this->getProductions()){
         // Alle subsets maken
         vector<vector<string>> subsets;
-        makeNullableSubsets(subsets, nullableTerminals, production->getBody());
+        makeNullableSubsets(subsets, nullableTerminals, production.getBody());
 
         // Als er meer dan 1 subset gemaakt kan worden, elk van deze bodies toevoegen.
         if (subsets.size() > 1){
             // Eerste body is al aanwezig, dus we beginnen bij de 2de (index 1)
             for (int i = 1; i < subsets.size(); ++i){
-                addProduction(new Production(production->getHead(), subsets[i]));
+                addProduction(Production(production.getHead(), subsets[i]));
             }
         }
     }
@@ -276,12 +281,12 @@ bool CFG::isNullable(vector<string> inputString) {
     }
     // Leftmost character van de string
     auto leftmost = inputString[0];
-    for (auto production:getProductions()){
+    for (const auto& production:getProductions()){
         // Als de productie uit de leftmost volgt en niet zichzelf bevat
-        if (production->getHead() == leftmost and
-                !std::count(production->getBody().begin(), production->getBody().end(), leftmost)){
+        if (production.getHead() == leftmost and
+                !std::count(production.getBody().begin(), production.getBody().end(), leftmost)){
             // We maken de nieuwe string: nieuwe body + inputString zonder leftmost variable
-            auto newInput = production->getBody();
+            auto newInput = production.getBody();
             newInput.insert(newInput.end(), inputString.begin() + 1, inputString.end());
 
             // Als deze nieuwe string nullable is: return true
@@ -293,17 +298,91 @@ bool CFG::isNullable(vector<string> inputString) {
     return false;
 }
 
-vector<Production *> sortProds(const vector<Production*>& prods) {
+void CFG::removeUnitPairs() {
+    // Aantal unit pairs bij start berekenen
+    int n = 0;
+    for (const auto& production: this->getProductions()){
+        if (production.getBody().size() == 1 and
+                std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), production.getBody()[0])){
+            ++n;
+        }
+    }
+    cout << "  Found " << n << " unit productions" << endl;
+
+    // Alle reflexieve unitPairs toevoegen aan de vector met unit pairs.
+    vector<pair<string, string>> unitPairs;
+    for (const auto& nonTerm:this->getNonTerminals()){
+        unitPairs.emplace_back(nonTerm, nonTerm);
+    }
+
+    // Alle unit pairs wegwerken totdat ze allemaal weg zijn.
+    bool done = false;
+    while (!done){
+        done = true;
+        auto prods = this->getProductions();
+        for (const auto& production : prods){
+            // Als het de productie een unit productie is
+            if (production.getBody().size() == 1 and
+                    std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), production.getBody()[0])
+                    and !std::count(unitPairs.begin(), unitPairs.end(),
+                                    make_pair(production.getHead(), production.getBody()[0]))){
+                unitPairs.emplace_back(production.getHead(), production.getBody()[0]);
+                done = false;
+
+                // Alle producties met hetzelfde head verzamelen.
+                vector<Production> sameHeadProds;
+                for (const auto& prd: this->getProductions()){
+                    if (prd.getHead() == production.getBody()[0]){
+                        sameHeadProds.push_back(prd);
+                    }
+                }
+
+                // Alle nieuwe producties toevoegen
+                for (const auto& prd: sameHeadProds){
+                    auto newProd = Production(production.getHead(), prd.getBody());
+                    this->addProduction(newProd);
+                }
+            }
+        }
+    }
+
+    // Alle niet-unieke pairs verwijderen en de paren sorteren.
+    unitPairs.erase(unique(unitPairs.begin(), unitPairs.end()), unitPairs.end());
+    std::sort(unitPairs.begin(), unitPairs.end());
+
+    cout << "  Unit pairs: {";
+    for (const auto& unitProd:unitPairs){
+        if (unitProd == unitPairs[unitPairs.size() - 1]){
+            cout << "(" << unitProd.first << ", " << unitProd.second << ")}" << endl;
+        }
+        else{
+            cout << "(" << unitProd.first << ", " << unitProd.second << "), ";
+        }
+    }
+
+    // Alle unit producties verwijderen:
+    vector<Production> newProds;
+    for (const auto& production: this->getProductions()){
+        assert(!production.getBody().empty());
+        if (production.getBody().size() > 1 or std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody()[0])){
+            newProds.push_back(production);
+        }
+    }
+
+    this->setProductions(removeDupes(sortProds(newProds)));
+}
+
+vector<Production> sortProds(const vector<Production> &prods) {
     vector<string> sortStrings;
-    for (auto production: prods){
-        sortStrings.push_back(production->getSortString());
+    for (const auto& production: prods){
+        sortStrings.push_back(production.getSortString());
     }
     sort(sortStrings.begin(), sortStrings.end());
 
-    vector<Production*> newProds;
+    vector<Production> newProds;
     for (const auto& str: sortStrings){
-        for (auto prod: prods){
-            if (prod->getSortString() == str){
+        for (const auto& prod: prods){
+            if (prod.getSortString() == str){
                 newProds.push_back(prod);
             }
         }
@@ -311,6 +390,16 @@ vector<Production *> sortProds(const vector<Production*>& prods) {
     return newProds;
 }
 
+vector<Production> removeDupes(const vector<Production> &prods){
+    vector<Production> newProds;
+    newProds.push_back(prods[0]);
+    for (const auto& production: prods){
+        if (production.getHead() != newProds[newProds.size() - 1].getHead() or production.getBody() != newProds[newProds.size() - 1].getBody()){
+            newProds.push_back(production);
+        }
+    }
+    return newProds;
+}
 void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current) {
     assert(!current.empty());
     // Checken of current niet al in de subsets verzameling zit

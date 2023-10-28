@@ -18,11 +18,14 @@ using json = nlohmann::json;
 class CFG {
     vector<string> nonTerminals;
     vector<string> terminals;
-    vector<Production*> productions;
+    vector<Production> productions;
     string startSymbol;
     CFG* init;
     string filename;
 public:
+
+    bool properlyInitialised();
+
     CFG();
 
     explicit CFG(const string &name);
@@ -31,9 +34,15 @@ public:
 
     void removeNullable();
 
+    void removeUnitPairs();
+
     bool isNullable(vector<string> inputString);
 
-    bool properlyInitialised();
+    vector<string> print();
+
+    /////////////////////////
+    // Getters en setters: //
+    /////////////////////////
 
     const vector<string> & getNonTerminals();
 
@@ -43,9 +52,9 @@ public:
 
     void setTerminals(const vector<string> &terminals);
 
-    const vector<Production*> & getProductions();
+    const vector<Production> & getProductions();
 
-    void setProductions(const vector<Production*> &rules);
+    void setProductions(const vector<Production> &rules);
 
     const string & getStartSymbol();
 
@@ -55,12 +64,12 @@ public:
 
     void addNonTerminal(const string &term);
 
-    void addProduction(Production* prod);
-
-    vector<string> print();
+    void addProduction(const Production& prod);
 };
 
-vector<Production*> sortProds(const vector<Production*>& prods);
+vector<Production> sortProds(const vector<Production> &prods);
+
+vector<Production> removeDupes(const vector<Production> &prods);
 
 void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current);
 
