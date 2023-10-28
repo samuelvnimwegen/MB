@@ -225,6 +225,17 @@ CFG CFG::toCNF() {
     CNF.removeUnitPairs();
     cout << "  Created " << CNF.getProductions().size() << " new productions, original had " << productionAmount <<  endl << endl;
     CNF.print();
+    cout << endl << endl;
+    productionAmount = int(CNF.getProductions().size());
+    cout << " >> Eliminating useless symbols" << endl;
+    CNF.removeUseless();
+    cout << "  Removed " << this->getNonTerminals().size() - CNF.getNonTerminals().size() << " variables, " <<
+    this->getTerminals().size() - CNF.getTerminals().size()<< " terminals and " << productionAmount - CNF.getProductions().size()
+    <<" productions" << endl << endl;
+    CNF.print();
+    cout << endl;
+    cout << " >> Replacing terminals in bad bodies" << endl;
+
 
     return CNF;
 }
@@ -372,6 +383,104 @@ void CFG::removeUnitPairs() {
     this->setProductions(removeDupes(sortProds(newProds)));
 }
 
+void CFG::removeUseless() {
+    // Eerst zoeken we de generatingSymbols symbolen
+    vector<string> generatingSymbols = this->getTerminals();
+    bool done = false;
+    while (!done){
+        done = true;
+        for (const auto& production: this->getProductions()){
+            // Voor elke productie waarvan het head nog niet generatief is:
+            if (!std::count(generatingSymbols.begin(), generatingSymbols.end(), production.getHead())){
+                bool generative = true;
+                for (const auto& var: production.getBody()){
+                    // Als de var niet terminaal is en geen generatingSymbols symbol is, is deze productie niet generatief
+                    if (!std::count(this->getTerminals().begin(), this->getTerminals().end(), var) and
+                            !std::count(generatingSymbols.begin(), generatingSymbols.end(), var)){
+                        generative = false;
+                    }
+                }
+                if (generative){
+                    generatingSymbols.push_back(production.getHead());
+                    done = false;
+                }
+            }
+        }
+    }
+    std::sort(generatingSymbols.begin(), generatingSymbols.end());
+
+    // Nu de producties die een non-generatingSymbols symbool bevatten verwijderen
+    vector<Production> newProds;
+    for (const auto& production: this->getProductions()){
+        bool generating = std::count(generatingSymbols.begin(), generatingSymbols.end(), production.getHead());
+        for (const auto& sym: production.getBody()){
+            if (!std::count(generatingSymbols.begin(), generatingSymbols.end(), sym)){
+                generating = false;
+            }
+        }
+        if (generating){
+            newProds.push_back(production);
+        }
+    }
+    setProductions(removeDupes(sortProds(newProds)));
+
+    cout << "  Generating symbols: ";
+    printVector(generatingSymbols);
+
+    // Nu alle reachable symbolen zoeken
+    vector<string> reachableSymbols = {this->getStartSymbol()};
+    for (const auto& production: this->getProductions()){
+        // Als het head een reachable symbol is
+        if (std::count(reachableSymbols.begin(), reachableSymbols.end(), production.getHead())){
+            for (const auto& sym: production.getBody()){
+                // Voor elk symbool checken of deze al in de vector zit, anders toevoegen
+                if (!std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
+                    reachableSymbols.push_back(sym);
+                }
+            }
+        }
+    }
+    std::sort(reachableSymbols.begin(), reachableSymbols.end());
+
+    // Nu alle producties met unreachable symbolen weghalen
+    newProds = {};
+    for (const auto& production: this->getProductions()){
+        // Kijken of head reachable is:
+        bool reachable = std::count(reachableSymbols.begin(), reachableSymbols.end(), production.getHead());
+        for (const auto& sym: production.getBody()){
+            // Als 1 van de body symbolen niet reachable is, dan productie niet reachable.
+            if (!std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
+                reachable = false;
+            }
+        }
+        if (reachable){
+            newProds.push_back(production);
+        }
+    }
+    setProductions(removeDupes(sortProds(newProds)));
+
+    cout << "  Reachable symbols: ";
+    printVector(reachableSymbols);
+
+    cout << "  Useful symbols: ";
+    printVector(reachableSymbols);
+
+    vector<string> newTerms, newNonTerms;
+    for (const auto& sym: this->getTerminals()){
+        if (std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
+            newTerms.push_back(sym);
+        }
+    }
+    for (const auto& sym: this->getNonTerminals()){
+        if (std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
+            newNonTerms.push_back(sym);
+        }
+    }
+
+    this->setTerminals(newTerms);
+    this->setNonTerminals(newNonTerms);
+}
+
 vector<Production> sortProds(const vector<Production> &prods) {
     vector<string> sortStrings;
     for (const auto& production: prods){
@@ -421,4 +530,15 @@ void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &
             makeNullableSubsets(subsets, nullables, copy);
         }
     }
+}
+
+void printVector(const vector<string> &items) {
+    string outString = "{";
+    for (const auto& sym: items){
+        outString += sym + ", ";
+    }
+    outString.pop_back();
+    outString.pop_back();
+    outString += "}";
+    cout << outString << endl;
 }

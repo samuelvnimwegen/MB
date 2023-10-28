@@ -36,6 +36,8 @@ public:
 
     void removeUnitPairs();
 
+    void removeUseless();
+
     bool isNullable(vector<string> inputString);
 
     vector<string> print();
@@ -72,5 +74,7 @@ vector<Production> sortProds(const vector<Production> &prods);
 vector<Production> removeDupes(const vector<Production> &prods);
 
 void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current);
+
+void printVector(const vector<string> &items);
 
 #endif //MB_CFG_H
