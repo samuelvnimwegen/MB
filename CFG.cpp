@@ -587,6 +587,26 @@ void CFG::breakBodies() {
     setNonTerminals(newVars);
 }
 
+void CFG::ll() {
+
+}
+
+const vector<Production> &CFG::getFirst() const {
+    return first;
+}
+
+void CFG::setFirst(const vector<Production> &fr) {
+    CFG::first = fr;
+}
+
+const vector<Production> &CFG::getFollow() const {
+    return follow;
+}
+
+void CFG::setFollow(const vector<Production> &fl) {
+    CFG::follow = fl;
+}
+
 vector<Production> sortProds(const vector<Production> &prods) {
     vector<string> sortStrings;
     for (const auto& production: prods){

@@ -22,6 +22,8 @@ class CFG {
     string startSymbol;
     CFG* init;
     string filename;
+    vector<Production> first;
+    vector<Production> follow;
 public:
 
     bool properlyInitialised();
@@ -31,6 +33,8 @@ public:
     explicit CFG(const string &name);
 
     CFG toCNF();
+
+    void ll();
 
     void removeNullable();
 
@@ -71,6 +75,14 @@ public:
     void addNonTerminal(const string &term);
 
     void addProduction(const Production& prod);
+
+    [[nodiscard]] const vector<Production> &getFirst() const;
+
+    void setFirst(const vector<Production> &fr);
+
+    [[nodiscard]] const vector<Production> &getFollow() const;
+
+    void setFollow(const vector<Production> &fl);
 };
 
 vector<Production> sortProds(const vector<Production> &prods);

@@ -70,6 +70,13 @@ build CMakeFiles/MB.dir/Production.cpp.obj: CXX_COMPILER__MB_unscanned_Debug C$:
   OBJECT_DIR = CMakeFiles\MB.dir
   OBJECT_FILE_DIR = CMakeFiles\MB.dir
 
+build CMakeFiles/MB.dir/LLParser.cpp.obj: CXX_COMPILER__MB_unscanned_Debug C$:/Users/Samue/Documents/GitHub/MB/LLParser.cpp || cmake_object_order_depends_target_MB
+  DEP_FILE = CMakeFiles\MB.dir\LLParser.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Samue/Documents/GitHub/MB/./gtest/include
+  OBJECT_DIR = CMakeFiles\MB.dir
+  OBJECT_FILE_DIR = CMakeFiles\MB.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target MB
@@ -78,7 +85,7 @@ build CMakeFiles/MB.dir/Production.cpp.obj: CXX_COMPILER__MB_unscanned_Debug C$:
 #############################################
 # Link the executable MB.exe
 
-build MB.exe: CXX_EXECUTABLE_LINKER__MB_Debug CMakeFiles/MB.dir/CFG.cpp.obj CMakeFiles/MB.dir/main.cpp.obj CMakeFiles/MB.dir/Production.cpp.obj
+build MB.exe: CXX_EXECUTABLE_LINKER__MB_Debug CMakeFiles/MB.dir/CFG.cpp.obj CMakeFiles/MB.dir/main.cpp.obj CMakeFiles/MB.dir/Production.cpp.obj CMakeFiles/MB.dir/LLParser.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/Users/Samue/Documents/GitHub/MB/./gtest/lib
@@ -119,6 +126,13 @@ build CMakeFiles/MB_debug.dir/Production.cpp.obj: CXX_COMPILER__MB_debug_unscann
   OBJECT_DIR = CMakeFiles\MB_debug.dir
   OBJECT_FILE_DIR = CMakeFiles\MB_debug.dir
 
+build CMakeFiles/MB_debug.dir/LLParser.cpp.obj: CXX_COMPILER__MB_debug_unscanned_Debug C$:/Users/Samue/Documents/GitHub/MB/LLParser.cpp || cmake_object_order_depends_target_MB_debug
+  DEP_FILE = CMakeFiles\MB_debug.dir\LLParser.cpp.obj.d
+  FLAGS = -g -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Samue/Documents/GitHub/MB/./gtest/include
+  OBJECT_DIR = CMakeFiles\MB_debug.dir
+  OBJECT_FILE_DIR = CMakeFiles\MB_debug.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target MB_debug
@@ -127,7 +141,7 @@ build CMakeFiles/MB_debug.dir/Production.cpp.obj: CXX_COMPILER__MB_debug_unscann
 #############################################
 # Link the executable MB_debug.exe
 
-build MB_debug.exe: CXX_EXECUTABLE_LINKER__MB_debug_Debug CMakeFiles/MB_debug.dir/CFG.cpp.obj CMakeFiles/MB_debug.dir/MBTests.cpp.obj CMakeFiles/MB_debug.dir/Production.cpp.obj
+build MB_debug.exe: CXX_EXECUTABLE_LINKER__MB_debug_Debug CMakeFiles/MB_debug.dir/CFG.cpp.obj CMakeFiles/MB_debug.dir/MBTests.cpp.obj CMakeFiles/MB_debug.dir/Production.cpp.obj CMakeFiles/MB_debug.dir/LLParser.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lgtest  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/Users/Samue/Documents/GitHub/MB/./gtest/lib
