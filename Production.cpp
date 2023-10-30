@@ -18,13 +18,15 @@ const vector<string> &Production::getBody() const {
 
 string Production::getSortString() const {
     string out = this->getHead();
-    out += " -> '";
+    out += " -> `";
 
     for (const auto& ch: this->getBody()){
         out += ch + " ";
     }
-    out.pop_back();
-    out += "'";
+    if (!getBody().empty()){
+        out.pop_back();
+    }
+    out += "`";
     return out;
 }
 

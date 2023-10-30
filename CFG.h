@@ -81,4 +81,7 @@ void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &
 
 void printVector(const vector<string> &items);
 
+string breakBodyName(const string &head, const vector<string> &vars);
+
+
 #endif //MB_CFG_H

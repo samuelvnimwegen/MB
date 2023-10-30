@@ -241,12 +241,18 @@ CFG CFG::toCNF() {
 
     cout << " >> Replacing terminals in bad bodies" << endl;
     CNF.replaceBadBodies();
-    cout << "  Created "<< CNF.getProductions().size() <<" new productions, original had " << productionAmount << endl;
+    cout << "  Created "<< CNF.getProductions().size() <<" new productions, original had " << productionAmount << endl << endl;
     CNF.print();
     cout << endl;
     productionAmount = int(CNF.getProductions().size());
+    int varAmount = int(CNF.getNonTerminals().size());
 
     CNF.breakBodies();
+    cout << " >> Broke " << int(CNF.getProductions().size()) - productionAmount <<" bodies, added "<< int(CNF.getNonTerminals().size()) - varAmount
+    <<" new variables"<< endl;
+    cout << ">>> Result CFG:" << endl << endl;
+    CNF.print();
+
 
     return CNF;
 }
@@ -261,11 +267,13 @@ void CFG::removeNullable() {
     }
     // Nullables printen
     cout << "  Nullables are {";
-    for (int i = 0; i < nullableTerminals.size() - 1; ++i){
-        cout << nullableTerminals[i] << ", ";
-    }
     if (!nullableTerminals.empty()){
-        cout << nullableTerminals[nullableTerminals.size() - 1];
+        for (int i = 0; i < nullableTerminals.size() - 1; ++i){
+            cout << nullableTerminals[i] << ", ";
+        }
+        if (!nullableTerminals.empty()){
+            cout << nullableTerminals[nullableTerminals.size() - 1];
+        }
     }
     cout << "}" << endl;
 
@@ -291,6 +299,7 @@ void CFG::removeNullable() {
         }
     }
 
+    setProductions(removeDupes(sortProds(this->getProductions())));
 
 
 
@@ -440,17 +449,23 @@ void CFG::removeUseless() {
 
     // Nu alle reachable symbolen zoeken
     vector<string> reachableSymbols = {this->getStartSymbol()};
-    for (const auto& production: this->getProductions()){
-        // Als het head een reachable symbol is
-        if (std::count(reachableSymbols.begin(), reachableSymbols.end(), production.getHead())){
-            for (const auto& sym: production.getBody()){
-                // Voor elk symbool checken of deze al in de vector zit, anders toevoegen
-                if (!std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
-                    reachableSymbols.push_back(sym);
+    done = false;
+    while (!done){
+        done = true;
+        for (const auto& production: this->getProductions()){
+            // Als het head een reachable symbol is
+            if (std::count(reachableSymbols.begin(), reachableSymbols.end(), production.getHead())){
+                for (const auto& sym: production.getBody()){
+                    // Voor elk symbool checken of deze al in de vector zit, anders toevoegen
+                    if (!std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
+                        reachableSymbols.push_back(sym);
+                        done = false;
+                    }
                 }
             }
         }
     }
+
     std::sort(reachableSymbols.begin(), reachableSymbols.end());
 
     // Nu alle producties met unreachable symbolen weghalen
@@ -535,12 +550,41 @@ void CFG::replaceBadBodies() {
     }
     this->setProductions(removeDupes(sortProds(newProds)));
     std::sort(newVars.begin(), newVars.end());
+    this->setNonTerminals(newVars);
+    std::sort(newVars.begin(), newVars.end());
     cout << "  Added "<< newVarsWithoutOld.size() <<" new variables: ";
     printVector(newVarsWithoutOld);
 }
 
 void CFG::breakBodies() {
+    vector<string> newVars = getNonTerminals();
+    bool klaar = false;
+    vector<Production> newProds;
+    while (!klaar){
+        klaar = true;
+        for (const auto& production: this->getProductions()){
+            if (production.getBody().size() >= 3){
+                klaar = false;
+                // Nieuwe variabele aanmaken:
+                string varName = breakBodyName(production.getHead(), newVars);
+                newVars.push_back(varName);
 
+                // De 2 nieuwe producties aanmaken
+                newProds.push_back(Production(production.getHead(), {production.getBody()[0], varName}));
+                vector<string> newBody(production.getBody().begin() + 1, production.getBody().end());
+                newProds.emplace_back(varName, newBody);
+            }
+            else{
+                newProds.push_back(production);
+            }
+        }
+
+        // Bij elke while loop iteratie de producties updaten
+        setProductions(removeDupes(sortProds(newProds)));
+        newProds.clear();
+    }
+    std::sort(newVars.begin(), newVars.end());
+    setNonTerminals(newVars);
 }
 
 vector<Production> sortProds(const vector<Production> &prods) {
@@ -548,7 +592,8 @@ vector<Production> sortProds(const vector<Production> &prods) {
     for (const auto& production: prods){
         sortStrings.push_back(production.getSortString());
     }
-    sort(sortStrings.begin(), sortStrings.end());
+
+    std::sort(sortStrings.begin(), sortStrings.end());
 
     vector<Production> newProds;
     for (const auto& str: sortStrings){
@@ -605,4 +650,12 @@ void printVector(const vector<string> &items) {
     }
     outString += "}";
     cout << outString << endl;
+}
+
+string breakBodyName(const string &head, const vector<string> &vars) {
+    int i = 2;
+    while (std::count(vars.begin(), vars.end(), head + "_" + to_string(i))){
+        ++i;
+    }
+    return head + "_" + to_string(i);
 }
