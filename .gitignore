@@ -1,3 +1,4 @@
 
 *.log
 /cmake-build-debug/
+/cmake-build-debug/Testing/
