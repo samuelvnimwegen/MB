@@ -8,7 +8,7 @@ CFG::CFG() {
     init = this;
 
     // temp
-    setNonTerminals({"BINDIGIT", "S"});
+    setVariables({"BINDIGIT", "S"});
     setTerminals({"0", "1", "a", "b"});
     setStartSymbol({"S"});
     vector<Production> replacements;
@@ -39,11 +39,11 @@ CFG::CFG(const string &name){
 
     // Alle variables toevoegen
     for (string var: j["Variables"]){
-        this->addNonTerminal(var);
+        this->addVariables(var);
     }
-    vector<string> nonTerms = this->getNonTerminals();
+    vector<string> nonTerms = this->getVariables();
     std::sort(nonTerms.begin(), nonTerms.end());
-    this->setNonTerminals(nonTerms);
+    this->setVariables(nonTerms);
 
     // Alle Terminals toevoegen
     for (string term: j["Terminals"]){
@@ -70,16 +70,16 @@ CFG::CFG(const string &name){
     this->setStartSymbol(start);
 }
 
-const vector<string> & CFG::getNonTerminals() {
+const vector<string> & CFG::getVariables() {
     assert(this->properlyInitialised());
-    return nonTerminals;
+    return variables;
 }
 
-void CFG::setNonTerminals(const vector<string> &nt) {
+void CFG::setVariables(const vector<string> &nonTerminals) {
     assert(this->properlyInitialised());
-    assert(!nt.empty());
-    CFG::nonTerminals = nt;
-    assert(this->getNonTerminals() == nt);
+    assert(!nonTerminals.empty());
+    CFG::variables = nonTerminals;
+    assert(this->getVariables() == nonTerminals);
 }
 
 const vector<string> & CFG::getTerminals() {
@@ -115,7 +115,7 @@ const string & CFG::getStartSymbol() {
 void CFG::setStartSymbol(const string &startSym) {
     assert(this->properlyInitialised());
     assert(!startSym.empty());
-    assert(count(nonTerminals.begin(), nonTerminals.end(),startSym));
+    assert(count(variables.begin(), variables.end(), startSym));
     CFG::startSymbol = startSym;
     assert(this->getStartSymbol() == startSym);
 
@@ -132,7 +132,7 @@ vector<string> CFG::print() {
 
     // Non-terminals
     string nonTerms = "V = {";
-    for (const auto& sym: this->getNonTerminals()){
+    for (const auto& sym: this->getVariables()){
         nonTerms += sym + ", ";
     }
     nonTerms.pop_back(); nonTerms.pop_back();
@@ -186,25 +186,25 @@ void CFG::addTerminal(const string &term) {
     assert(this->getTerminals()[this->getTerminals().size() - 1] == term);
 }
 
-void CFG::addNonTerminal(const string &term) {
+void CFG::addVariables(const string &term) {
     assert(this->properlyInitialised());
     assert(!term.empty());
-    assert(!std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), term));
+    assert(!std::count(this->getVariables().begin(), this->getVariables().end(), term));
 
 
-    auto terms = this->getNonTerminals();
+    auto terms = this->getVariables();
     terms.push_back(term);
-    this->setNonTerminals(terms);
-    assert(this->getNonTerminals()[this->getNonTerminals().size() - 1] == term);
+    this->setVariables(terms);
+    assert(this->getVariables()[this->getVariables().size() - 1] == term);
 }
 
 void CFG::addProduction(const Production& prod) {
     assert(!prod.getHead().empty());
     assert(this->properlyInitialised());
-    assert(std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(),prod.getHead()));
+    assert(std::count(this->getVariables().begin(), this->getVariables().end(), prod.getHead()));
     for (const auto& ch: prod.getBody()){
         bool charInSystem = std::count(this->getTerminals().begin(), this->getTerminals().end(),ch) or
-                std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), ch);
+                std::count(this->getVariables().begin(), this->getVariables().end(), ch);
         assert(charInSystem);
     }
     productions.push_back(prod);
@@ -232,8 +232,8 @@ CFG CFG::toCNF() {
 
     cout << " >> Eliminating useless symbols" << endl;
     CNF.removeUseless();
-    cout << "  Removed " << this->getNonTerminals().size() - CNF.getNonTerminals().size() << " variables, " <<
-    this->getTerminals().size() - CNF.getTerminals().size()<< " terminals and " << productionAmount - CNF.getProductions().size()
+    cout << "  Removed " << this->getVariables().size() - CNF.getVariables().size() << " variables, " <<
+    this->getTerminals().size() - CNF.getTerminals().size() << " terminals and " << productionAmount - CNF.getProductions().size()
     <<" productions" << endl << endl;
     CNF.print();
     cout << endl;
@@ -245,10 +245,11 @@ CFG CFG::toCNF() {
     CNF.print();
     cout << endl;
     productionAmount = int(CNF.getProductions().size());
-    int varAmount = int(CNF.getNonTerminals().size());
+    int varAmount = int(CNF.getVariables().size());
 
     CNF.breakBodies();
-    cout << " >> Broke " << int(CNF.getProductions().size()) - productionAmount <<" bodies, added "<< int(CNF.getNonTerminals().size()) - varAmount
+    cout << " >> Broke " << int(CNF.getProductions().size()) - productionAmount <<" bodies, added "<< int(
+            CNF.getVariables().size()) - varAmount
     <<" new variables"<< endl;
     cout << ">>> Result CFG:" << endl << endl;
     CNF.print();
@@ -257,10 +258,14 @@ CFG CFG::toCNF() {
     return CNF;
 }
 
+void CFG::ll() {
+    this->makeFirst();
+}
+
 void CFG::removeNullable() {
     // Vector met alle nullable terminals maken
     vector<string> nullableTerminals;
-    for (const auto& terminal: this->getNonTerminals()){
+    for (const auto& terminal: this->getVariables()){
         if (isNullable({terminal})){
             nullableTerminals.push_back(terminal);
         }
@@ -334,7 +339,7 @@ void CFG::removeUnitPairs() {
     int n = 0;
     for (const auto& production: this->getProductions()){
         if (production.getBody().size() == 1 and
-                std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), production.getBody()[0])){
+                std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])){
             ++n;
         }
     }
@@ -342,7 +347,7 @@ void CFG::removeUnitPairs() {
 
     // Alle reflexieve unitPairs toevoegen aan de vector met unit pairs.
     vector<pair<string, string>> unitPairs;
-    for (const auto& nonTerm:this->getNonTerminals()){
+    for (const auto& nonTerm: this->getVariables()){
         unitPairs.emplace_back(nonTerm, nonTerm);
     }
 
@@ -354,7 +359,7 @@ void CFG::removeUnitPairs() {
         for (const auto& production : prods){
             // Als het de productie een unit productie is
             if (production.getBody().size() == 1 and
-                    std::count(this->getNonTerminals().begin(), this->getNonTerminals().end(), production.getBody()[0])
+                    std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])
                     and !std::count(unitPairs.begin(), unitPairs.end(),
                                     make_pair(production.getHead(), production.getBody()[0]))){
                 unitPairs.emplace_back(production.getHead(), production.getBody()[0]);
@@ -497,20 +502,20 @@ void CFG::removeUseless() {
             newTerms.push_back(sym);
         }
     }
-    for (const auto& sym: this->getNonTerminals()){
+    for (const auto& sym: this->getVariables()){
         if (std::count(reachableSymbols.begin(), reachableSymbols.end(), sym)){
             newNonTerms.push_back(sym);
         }
     }
 
     this->setTerminals(newTerms);
-    this->setNonTerminals(newNonTerms);
+    this->setVariables(newNonTerms);
 }
 
 void CFG::replaceBadBodies() {
     // Beginnen met alle bodies >= 2 met alleen variabelen te schrijven.
     vector<Production> newProds;
-    vector<string> newVars = this->getNonTerminals();
+    vector<string> newVars = this->getVariables();
     vector<string> newVarsWithoutOld;
     for (const auto& production: this->getProductions()){
         if (production.getBody().size() >= 2){
@@ -550,14 +555,14 @@ void CFG::replaceBadBodies() {
     }
     this->setProductions(removeDupes(sortProds(newProds)));
     std::sort(newVars.begin(), newVars.end());
-    this->setNonTerminals(newVars);
+    this->setVariables(newVars);
     std::sort(newVars.begin(), newVars.end());
     cout << "  Added "<< newVarsWithoutOld.size() <<" new variables: ";
     printVector(newVarsWithoutOld);
 }
 
 void CFG::breakBodies() {
-    vector<string> newVars = getNonTerminals();
+    vector<string> newVars = getVariables();
     bool klaar = false;
     vector<Production> newProds;
     while (!klaar){
@@ -584,12 +589,9 @@ void CFG::breakBodies() {
         newProds.clear();
     }
     std::sort(newVars.begin(), newVars.end());
-    setNonTerminals(newVars);
+    setVariables(newVars);
 }
 
-void CFG::ll() {
-
-}
 
 const vector<Production> &CFG::getFirst() const {
     return first;
@@ -605,6 +607,73 @@ const vector<Production> &CFG::getFollow() const {
 
 void CFG::setFollow(const vector<Production> &fl) {
     CFG::follow = fl;
+}
+
+void CFG::makeFirst() {
+    // Eerst maken we alle firstProductions
+    vector<Production> firstProds;
+    vector<Production> current = this->getProductions();
+    while (!current.empty()){
+        vector<Production> next;
+        for (const auto& production: current){
+            // Als het body van de operatie leeg is: Een spatie toevoegen
+            if (production.getBody().empty()){
+                firstProds.push_back(Production(production.getHead(), {"|"}));
+            }
+            // Als het eerste char van de body een terminal is: dan is dit de opl
+            else if (std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody()[0])){
+                firstProds.push_back(Production(production.getHead() ,{production.getBody()[0]}));
+            }
+            // Als het eerste char een variabele is
+            else if (std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])){
+                vector<Production> newProds;
+                for (const auto& firstProd: firstProds){
+                    // Als de variabele gevonden is: de body van deze variabele als body gebruiken
+                    if (firstProd.getHead() == production.getBody()[0]){
+                        newProds.push_back(Production(production.getHead(), {firstProd.getBody()[0]}));
+                    }
+                }
+                // Als er geen oplossingen zijn gevonden: toevoegen aan next
+                if (newProds.empty()){
+                    next.push_back(production);
+                }
+                // Als er wel oplossingen zijn gevonden, deze aan firstProds toevoegen
+                else{
+                    for (const auto& prd: newProds){
+                        firstProds.push_back(prd);
+                    }
+                }
+            }
+            else{
+                cerr << "variabele niet herkend: " << production.getBody()[0] << endl;
+            }
+        }
+        // Alle niet gevonden variabelen terug in de loop zetten
+        current = next;
+    }
+
+    // Nu we alle producties hebben gaan we alle producties mergen die hetzelfde head hebben
+    vector<Production> firstProductMerged;
+    vector<string> heads;
+    for (const auto& production: firstProds){
+        // Checken of head niet al eerder uitgewerkt is
+        if (!std::count(heads.begin(), heads.end(), production.getHead())){
+            auto mergedBody = production.getBody();
+            for (const auto& brotherProduction: firstProds){
+                if (production.getHead() == brotherProduction.getHead() and production.getBody() != brotherProduction.getBody()){
+                    mergedBody.insert(mergedBody.end(), brotherProduction.getBody().begin(), brotherProduction.getBody().end());
+                }
+            }
+            std::sort(mergedBody.begin(), mergedBody.end());
+            firstProductMerged.emplace_back(production.getHead(), mergedBody);
+            heads.push_back(production.getHead());
+        }
+    }
+    setFirst(removeDupes(sortProds(firstProductMerged)));
+}
+
+void CFG::makeFollow() {
+
 }
 
 vector<Production> sortProds(const vector<Production> &prods) {

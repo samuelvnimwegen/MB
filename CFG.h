@@ -16,7 +16,7 @@ using namespace std;
 using json = nlohmann::json;
 
 class CFG {
-    vector<string> nonTerminals;
+    vector<string> variables;
     vector<string> terminals;
     vector<Production> productions;
     string startSymbol;
@@ -46,6 +46,10 @@ public:
 
     void breakBodies();
 
+    void makeFirst();
+
+    void makeFollow();
+
     bool isNullable(vector<string> inputString);
 
     vector<string> print();
@@ -54,9 +58,9 @@ public:
     // Getters en setters: //
     /////////////////////////
 
-    const vector<string> & getNonTerminals();
+    const vector<string> & getVariables();
 
-    void setNonTerminals(const vector<string> &nonTerminals);
+    void setVariables(const vector<string> &nonTerminals);
 
     const vector<string> & getTerminals();
 
@@ -72,7 +76,7 @@ public:
 
     void addTerminal(const string &term);
 
-    void addNonTerminal(const string &term);
+    void addVariables(const string &term);
 
     void addProduction(const Production& prod);
 
