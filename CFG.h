@@ -87,6 +87,7 @@ public:
     [[nodiscard]] const vector<Production> &getFollow() const;
 
     void setFollow(const vector<Production> &fl);
+
 };
 
 vector<Production> sortProds(const vector<Production> &prods);
@@ -98,6 +99,8 @@ void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &
 void printVector(const vector<string> &items);
 
 string breakBodyName(const string &head, const vector<string> &vars);
+
+Production mergeProductions(const vector<Production> &productions);
 
 
 #endif //MB_CFG_H

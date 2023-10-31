@@ -14,4 +14,9 @@ TEST_F(LLTest, fulltest1){
     vector<string> body = {"x", "|"};
     EXPECT_TRUE(cfg.getFirst()[0].getBody().size() == 2);
     EXPECT_TRUE(cfg.getFirst()[0].getBody() == body);
+    cfg.makeFollow();
+    vector<string> followBody = {"<EOS>", "y"};
+    EXPECT_TRUE(cfg.getFollow().size() == 1);
+    EXPECT_TRUE(cfg.getFollow()[0].getBody().size() == 2);
+    EXPECT_TRUE(cfg.getFollow()[0].getBody() == followBody);
 }

@@ -260,6 +260,7 @@ CFG CFG::toCNF() {
 
 void CFG::ll() {
     this->makeFirst();
+    this->makeFollow();
 }
 
 void CFG::removeNullable() {
@@ -673,7 +674,128 @@ void CFG::makeFirst() {
 }
 
 void CFG::makeFollow() {
+    // Alle variabelen afgaan en follow zoeken tot dat elke variabele een 'follow' heeft
+    vector<string> case3CompletedVars;
+    bool done = false;
+    int loopCounter = 0;
+    while (!done){
+        assert(loopCounter <= int(this->getVariables().size()));
+        done = true;
+        for (const auto& variable: this->getVariables()){
+            vector<Production> followProds;
+            // Case 1: het hoofd is het startsymbool:
+            if (variable == this->getStartSymbol()){
+                followProds.push_back(Production(variable, {"<EOS>"}));
+            }
 
+            // Case 2: Er is een productie waarin het hoofd niet het laatste symbool is, maar wel voor komt
+            for (const auto& production: this->getProductions()){
+                if (std::count(production.getBody().begin(), production.getBody().end(), production.getHead())
+                    and production.getBody()[production.getBody().size() - 1] != variable){
+                    // De index opzoeken van het volgende element in de string waarin het symbool voor komt
+                    int indexNext = -1;
+                    for (int i = 0; i < production.getBody().size(); ++i){
+                        if (production.getBody()[i] == variable){
+                            indexNext = i + 1;
+                        }
+                    }
+                    assert(indexNext != -1);
+                    auto nextSymbolInString = production.getBody()[indexNext];
+
+                    // Als het een terminal is, deze invoeren als follow
+                    if (std::count(this->getTerminals().begin(), this->getTerminals().end(), nextSymbolInString)){
+                        followProds.push_back(Production(variable, {nextSymbolInString}));
+                    }
+
+                    // Als het een variable is
+                    else{
+                        assert(std::count(this->getVariables().begin(), this->getVariables().end(), nextSymbolInString));
+                        // De 'first' productie zoeken met dit volgende symbool als head en de body hiervan opslaan
+                        for (const auto& firstProd: this->getFirst()){
+                            if (firstProd.getHead() == nextSymbolInString){
+                                followProds.emplace_back(variable, firstProd.getBody());
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Case 3: Als de variabele voor komt in een andere productie als laatste variabele, waarvan de variabele niet het head is
+            bool case3 = true;
+            for (const auto& production: this->getProductions()){
+                if (production.getHead() != variable and production.getBody().size() >= 2 and production.getBody()[production.getBody().size() - 1] == variable){
+                    // Als het head al een 'follow' heeft:
+                    if (std::count(case3CompletedVars.begin(), case3CompletedVars.end(), production.getHead())){
+                        // De 'follow' van het head zoeken:
+                        vector<string> followBody;
+                        for (const auto& foll: this->getFollow()){
+                            if (foll.getHead() == production.getHead()){
+                                followBody = foll.getBody();
+                            }
+                        }
+                        followProds.emplace_back(variable, followBody);
+                    }
+                    // Als deze head nog geen 'follow' heeft, de hele loop nog eens runnen
+                    else{
+                        done = false;
+                        case3 = false;
+                    }
+                }
+            }
+
+            // Case 4: Als er een productie is van size 3 in de vorm A → (BCD) waarbij epsilon in de 'first' van D zit,
+            // dan wordt er een extra body aan Follow(C) gegeven namelijk Follow(A)
+            bool case4 = true;
+            for (const auto& production: this->getProductions()){
+                bool lastSymIsVar = std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[2]);
+                if (production.getBody().size() == 3 and production.getBody()[1] == variable and lastSymIsVar){
+                    // Eerst zoeken we de 'first' van het symbool na de huidige variabele
+                    vector<string> firstProdBody;
+                    for (const auto& firstPrd: this->getFirst()){
+                        if (firstPrd.getHead() == production.getBody()[production.getBody().size() - 1]){
+                            firstProdBody = firstPrd.getBody();
+                        }
+                    }
+                    assert(!firstProdBody.empty());
+
+                    // Nu kijken we of epsilon hierin zit of in dit geval "|" wat hier als epsilon gebruikt wordt
+                    bool epsilonInVec = std::count(firstProdBody.begin(), firstProdBody.end(),"|");
+
+                    // Nu checken of er al een 'follow' aangemaakt met het head van de huidige productie
+                    bool followExists = false;
+                    vector<string> followBody;
+                    for (const auto& followProd: this->getFollow()){
+                        if (followProd.getHead() == production.getHead()){
+                            followExists = true;
+                            followBody = followProd.getBody();
+                        }
+                    }
+                    assert(followExists or followBody.empty());
+
+                    // Als deze 'follow' nog niet bestaat, de loop opnieuw runnen en case 4 kan nog niet uitgevoerd worden
+                    if (!followExists){
+                        case4 = false;
+                        done = false;
+                    }
+
+                    // Als deze allebei gelden
+                    else if (epsilonInVec and followExists){
+                        followProds.emplace_back(variable, followBody);
+                    }
+                }
+            }
+
+            // Checken of alle cases geen fouten zijn tegengekomen:
+            if (case4 and case3){
+                // Alle productions mergen en toevoegen aan Follow()
+                Production mergedProduction = mergeProductions(followProds);
+                auto newFollow = this->getFollow();
+                newFollow.push_back(mergedProduction);
+                setFollow(newFollow);
+            }
+        }
+        ++loopCounter;
+    }
 }
 
 vector<Production> sortProds(const vector<Production> &prods) {
@@ -747,4 +869,15 @@ string breakBodyName(const string &head, const vector<string> &vars) {
         ++i;
     }
     return head + "_" + to_string(i);
+}
+
+Production mergeProductions(const vector<Production> &productions) {
+    assert(!productions.empty());
+    string productionHead = productions[0].getHead();
+    vector<string> mergedBody;
+    for (const auto& production: productions){
+        mergedBody.insert(mergedBody.end(), production.getBody().begin(), production.getBody().end());
+    }
+    Production result = Production(productionHead, mergedBody);
+    return result;
 }
