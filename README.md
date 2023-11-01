@@ -1,3 +1,3 @@
 # MB
 Repository van Samuel van Nimwegen.
-Hierin staat voorlopig het CNF-algoritme, er komen later eventueel nog andere algoritmes bij.
+Hierin staan voorlopig het CNF-algoritme en het LL(1)-Parser algoritme.
