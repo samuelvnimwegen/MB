@@ -19,6 +19,11 @@ TEST_F(LLTest, fulltest1){
     EXPECT_TRUE(cfg.getFollow().size() == 1);
     EXPECT_TRUE(cfg.getFollow()[0].getBody().size() == 2);
     EXPECT_TRUE(cfg.getFollow()[0].getBody() == followBody);
+
+    cfg.makeTable();
+    vector<string> tableRow = {"`x S y`", "", ""};
+    EXPECT_TRUE(cfg.getLlTable().size() == 1);
+    EXPECT_TRUE(cfg.getLlTable()[0] == tableRow);
 }
 
 TEST_F(LLTest, fulltest2){
@@ -40,4 +45,11 @@ TEST_F(LLTest, fulltest2){
     vector<string> followBody2 = {"<EOS>", "a", "b"};
     EXPECT_TRUE(cfg.getFollow()[0].getBody() == followBody1);
     EXPECT_TRUE(cfg.getFollow()[1].getBody() == followBody2);
+
+    cfg.makeTable();
+    vector<string> tableRow1 = {"", "", "`c S`", "<ERR>"};
+    vector<string> tableRow2 = {"`a A b`", "`b A a`", "<ERR>", "<ERR>"};
+    EXPECT_TRUE(cfg.getLlTable().size() == 2);
+    EXPECT_TRUE(cfg.getLlTable()[0] == tableRow1);
+    EXPECT_TRUE(cfg.getLlTable()[1] == tableRow2);
 }

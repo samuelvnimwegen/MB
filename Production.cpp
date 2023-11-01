@@ -36,12 +36,12 @@ string Production::getBodyString() const {
         return "";
     }
 
-    string bodyString = "'";
+    string bodyString = "`";
     for (const auto& bodySym: this->getBody()){
         bodyString += bodySym + " ";
     }
     bodyString.pop_back();
-    bodyString += "'";
+    bodyString += "`";
 
     return bodyString;
 }
