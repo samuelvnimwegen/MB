@@ -261,31 +261,22 @@ void CFG::ll() {
 
     this->makeFirst();
     cout << " >> FIRST: ";
-    if (this->getFirst().size() == 1){
-        printVector(getFirst()[0].getBody());
-    }
-    else{
-        cout << endl;
-        for (const auto& firstProd: this->getFirst()){
-            cout << firstProd.getHead() << ": ";
-            printVector(firstProd.getBody());
-        }
+    cout << endl;
+    for (const auto& firstProd: this->getFirst()){
+        cout << "    " <<firstProd.getHead() << ": ";
+        printVector(firstProd.getBody());
     }
     this->makeFollow();
-    cout << " >> FOLLOW: ";
-    if (this->getFirst().size() == 1){
-        printVector(getFollow()[0].getBody());
-    }
-    else{
-        cout << endl;
-        for (const auto& followProd: this->getFollow()){
-            cout << followProd.getHead() << ": ";
-            printVector(followProd.getBody());
-        }
+    cout << " >> FOLLOW: "<< endl;
+    for (const auto& followProd: this->getFollow()){
+        cout << "    " << followProd.getHead() << ": ";
+        printVector(followProd.getBody());
     }
 
     this->makeTable();
     cout << ">>> Table is built." << endl << endl;
+    cout << "-------------------------------------" << endl << endl;
+    this->printTable();
 
 }
 
@@ -904,6 +895,70 @@ void CFG::addFirstPair(const pair<string, Production> &pair) {
 }
 
 void CFG::printTable() {
+    // Per kolom het grootste element vinden
+    vector<int> colWidths;
+    // Eerst de rij met variables
+    int maxVar = 0;
+    for (const auto& var: this->getVariables()){
+        if (var.size() > maxVar){
+            maxVar = int(var.size());
+        };
+    }
+    colWidths.push_back(maxVar);
+
+    // Voor de kolommen met terminals + <EOS>:
+    vector<string> termsAndEos = this->getTerminals();
+    termsAndEos.emplace_back("<EOS>");
+    for (int i = 0; i < this->getLlTable()[0].size(); ++i){
+        int colSize = 0;
+        for (auto row: this->getLlTable()){
+            if (row[i].size() > colSize){
+                colSize = int(row[i].size());
+            }
+        }
+        if (termsAndEos[i].size() > colSize){
+            colSize = int(termsAndEos[i].size());
+        }
+        assert(colSize > 0);
+        colWidths.push_back(colSize);
+    }
+
+    // Nu de table printen
+    // Eerste rij bevat alle terminals + <EOS>
+    string rij1 = "  " + generateSpace(colWidths[0]) + "  | ";
+    for (int i = 0; i < termsAndEos.size(); ++i){
+        auto term = termsAndEos[i];
+        rij1 += term + generateSpace(colWidths[i + 1] - int(term.size())) + "  | ";
+    }
+    rij1.pop_back();
+    cout << rij1 << endl;
+
+    // Nu een tussen-rij
+    string tussenRij = "|-";
+    for (int colWidth : colWidths){
+        string line;
+        for (int j = 0; j < colWidth; ++j){
+            line += "-";
+        }
+        tussenRij += line + "--|-";
+    }
+    tussenRij.pop_back();
+    cout << tussenRij << endl;
+
+    // Nu alle rijen met variabelen
+    for (int i = 0; i < this->getVariables().size(); ++i){
+        string var = this->getVariables()[i];
+        string rij = "| " + var + generateSpace(colWidths[0] - int(var.size())) + "  | ";
+        for (int j = 0; j < this->getLlTable()[i].size(); ++j){
+            auto vakje = this->getLlTable()[i][j];
+            rij += vakje + generateSpace(colWidths[j + 1] - int(vakje.size())) + "  | ";
+        }
+        rij.pop_back();
+        cout << rij << endl;
+    }
+
+    cout << tussenRij << endl;
+
 
 }
 
@@ -996,4 +1051,13 @@ Production mergeProductions(const vector<Production> &productions) {
     std::sort(mergedBody.begin(), mergedBody.end());
     Production result = Production(productionHead, mergedBody);
     return result;
+}
+
+string generateSpace(const int &size) {
+    assert(size >= 0);
+    string space;
+    for (int i = 0; i < size; ++i){
+        space += " ";
+    }
+    return space;
 }

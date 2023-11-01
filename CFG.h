@@ -120,5 +120,7 @@ string breakBodyName(const string &head, const vector<string> &vars);
 
 Production mergeProductions(const vector<Production> &productions);
 
+string generateSpace(const int &size);
+
 
 #endif //MB_CFG_H
