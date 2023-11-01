@@ -690,7 +690,7 @@ void CFG::makeFollow() {
 
             // Case 2: Er is een productie waarin het hoofd niet het laatste symbool is, maar wel voor komt
             for (const auto& production: this->getProductions()){
-                if (std::count(production.getBody().begin(), production.getBody().end(), production.getHead())
+                if (std::count(production.getBody().begin(), production.getBody().end(), variable)
                     and production.getBody()[production.getBody().size() - 1] != variable){
                     // De index opzoeken van het volgende element in de string waarin het symbool voor komt
                     int indexNext = -1;
@@ -792,6 +792,7 @@ void CFG::makeFollow() {
                 auto newFollow = this->getFollow();
                 newFollow.push_back(mergedProduction);
                 setFollow(newFollow);
+                case3CompletedVars.push_back(variable);
             }
         }
         ++loopCounter;
@@ -878,6 +879,7 @@ Production mergeProductions(const vector<Production> &productions) {
     for (const auto& production: productions){
         mergedBody.insert(mergedBody.end(), production.getBody().begin(), production.getBody().end());
     }
+    std::sort(mergedBody.begin(), mergedBody.end());
     Production result = Production(productionHead, mergedBody);
     return result;
 }
