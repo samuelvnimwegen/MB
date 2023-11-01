@@ -24,6 +24,8 @@ class CFG {
     string filename;
     vector<Production> first;
     vector<Production> follow;
+    vector<vector<string>> LLTable;
+    vector<pair<string, Production>> firstPairs;
 public:
 
     bool properlyInitialised();
@@ -50,6 +52,10 @@ public:
 
     void makeFollow();
 
+    void makeTable();
+
+    void printTable();
+
     bool isNullable(vector<string> inputString);
 
     vector<string> print();
@@ -57,6 +63,8 @@ public:
     /////////////////////////
     // Getters en setters: //
     /////////////////////////
+
+    void addTableRow(const vector<string> &row);
 
     const vector<string> & getVariables();
 
@@ -87,6 +95,16 @@ public:
     [[nodiscard]] const vector<Production> &getFollow() const;
 
     void setFollow(const vector<Production> &fl);
+
+    [[nodiscard]] const vector<vector<string>> &getLlTable() const;
+
+    void setLlTable(const vector<vector<string>> &llTable);
+
+    [[nodiscard]] const vector<pair<string, Production>> &getFirstPairs() const;
+
+    void setFirstPairs(const vector<pair<string, Production>> &fp);
+
+    void addFirstPair(const pair<string, Production>& pair);
 
 };
 

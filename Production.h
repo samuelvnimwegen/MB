@@ -20,6 +20,8 @@ public:
 
     [[nodiscard]] string getSortString() const;
 
+    [[nodiscard]] string getBodyString() const;
+
 };
 
 

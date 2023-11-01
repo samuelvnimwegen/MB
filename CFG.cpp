@@ -253,14 +253,40 @@ CFG CFG::toCNF() {
     <<" new variables"<< endl;
     cout << ">>> Result CFG:" << endl << endl;
     CNF.print();
-
-
     return CNF;
 }
 
 void CFG::ll() {
+    cout << ">>> Building LL(1) Table" << endl;
+
     this->makeFirst();
+    cout << " >> FIRST: ";
+    if (this->getFirst().size() == 1){
+        printVector(getFirst()[0].getBody());
+    }
+    else{
+        cout << endl;
+        for (const auto& firstProd: this->getFirst()){
+            cout << firstProd.getHead() << ": ";
+            printVector(firstProd.getBody());
+        }
+    }
     this->makeFollow();
+    cout << " >> FOLLOW: ";
+    if (this->getFirst().size() == 1){
+        printVector(getFollow()[0].getBody());
+    }
+    else{
+        cout << endl;
+        for (const auto& followProd: this->getFollow()){
+            cout << followProd.getHead() << ": ";
+            printVector(followProd.getBody());
+        }
+    }
+
+    this->makeTable();
+    cout << ">>> Table is built." << endl << endl;
+
 }
 
 void CFG::removeNullable() {
@@ -593,7 +619,6 @@ void CFG::breakBodies() {
     setVariables(newVars);
 }
 
-
 const vector<Production> &CFG::getFirst() const {
     return first;
 }
@@ -624,6 +649,7 @@ void CFG::makeFirst() {
             // Als het eerste char van de body een terminal is: dan is dit de opl
             else if (std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody()[0])){
                 firstProds.push_back(Production(production.getHead() ,{production.getBody()[0]}));
+                this->addFirstPair(make_pair(production.getBody()[0], production));
             }
             // Als het eerste char een variabele is
             else if (std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])){
@@ -632,6 +658,7 @@ void CFG::makeFirst() {
                     // Als de variabele gevonden is: de body van deze variabele als body gebruiken
                     if (firstProd.getHead() == production.getBody()[0]){
                         newProds.push_back(Production(production.getHead(), {firstProd.getBody()[0]}));
+                        this->addFirstPair(make_pair(firstProd.getBody()[0], production));
                     }
                 }
                 // Als er geen oplossingen zijn gevonden: toevoegen aan next
@@ -671,6 +698,7 @@ void CFG::makeFirst() {
         }
     }
     setFirst(removeDupes(sortProds(firstProductMerged)));
+    assert(!this->getFirst().empty());
 }
 
 void CFG::makeFollow() {
@@ -797,6 +825,86 @@ void CFG::makeFollow() {
         }
         ++loopCounter;
     }
+    assert(!this->getFollow().empty());
+}
+
+const vector<vector<string>> &CFG::getLlTable() const {
+    return LLTable;
+}
+
+void CFG::setLlTable(const vector<vector<string>> &llTable) {
+    LLTable = llTable;
+}
+
+void CFG::makeTable() {
+    // Per rij alle producties invullen die als first een terminal opleveren
+    for (int i = 0; i < this->getVariables().size(); ++i){
+        auto var = this->getVariables()[i];
+        vector<string> currentRow;
+        // Elke kolom binnen de rij afgaan
+        for (const auto& term: this->getTerminals()){
+            bool foundPair = false;
+            // Alle paren afgaan kijken of er een productie is die als first() de huidige terminal heeft
+            for (const auto& pair: this->getFirstPairs()){
+                if (pair.first == term and pair.second.getHead() == var){
+                    assert(!foundPair); // Er kan maar 1 productie per vakje zijn
+                    currentRow.push_back(pair.second.getBodyString());
+                    foundPair = true;
+                }
+            }
+            if (!foundPair){
+                currentRow.emplace_back("<ERR>");
+            }
+        }
+        currentRow.emplace_back("<ERR>"); // Dit is voor de laatste kolom, <EOS> die niet in de terminals zit.
+
+        // Nu checken of epsilon of hier dus "|" in de first() zit van de huidige variabele
+        if (std::count(this->getFirst()[i].getBody().begin(), this->getFirst()[i].getBody().end(), "|")){
+            // Loop runnen die voor elke terminal check of deze in de follow zit en als dit zo is "<ERR>" replaced met ""
+            for (int j = 0; j < this->getTerminals().size(); ++j){
+                auto term = this->getTerminals()[j];
+                if (std::count(this->getFollow()[i].getBody().begin(), this->getFollow()[i].getBody().end(), term)){
+                    assert(currentRow[j] == "<ERR>"); // Dit vakje moet nog leeg zijn, anders 2 producties in zelfde vakje
+                    currentRow[j] = "";
+                }
+            }
+
+            // Nu nog als <EOS> in de follow zit, dit vakje ook naar "" omzetten
+            if (std::count(this->getFollow()[i].getBody().begin(), this->getFollow()[i].getBody().end(), "<EOS>")){
+                currentRow[currentRow.size() - 1] = "";
+            }
+        }
+
+        this->addTableRow(currentRow);
+    }
+
+
+}
+
+void CFG::addTableRow(const vector<string> &row) {
+    assert(!row.empty());
+    auto table = this->getLlTable();
+    table.push_back(row);
+    this->setLlTable(table);
+    assert(this->getLlTable()[this->getLlTable().size() - 1] == row);
+}
+
+const vector<pair<string, Production>> &CFG::getFirstPairs() const {
+    return firstPairs;
+}
+
+void CFG::setFirstPairs(const vector<pair<string, Production>> &fp) {
+    CFG::firstPairs = fp;
+}
+
+void CFG::addFirstPair(const pair<string, Production> &pair) {
+    auto currentPairs = this->getFirstPairs();
+    currentPairs.push_back(pair);
+    this->setFirstPairs(currentPairs);
+}
+
+void CFG::printTable() {
+
 }
 
 vector<Production> sortProds(const vector<Production> &prods) {
@@ -828,6 +936,7 @@ vector<Production> removeDupes(const vector<Production> &prods){
     }
     return newProds;
 }
+
 void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &nullables, const vector<string> &current) {
     assert(!current.empty());
     // Checken of current niet al in de subsets verzameling zit
@@ -854,7 +963,12 @@ void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &
 void printVector(const vector<string> &items) {
     string outString = "{";
     for (const auto& sym: items){
-        outString += sym + ", ";
+        if (sym != "|"){
+            outString += sym + ", ";
+        }
+        else{
+            outString += ", ";
+        }
     }
     if (!items.empty()){
         outString.pop_back();
