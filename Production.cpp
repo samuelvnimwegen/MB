@@ -32,7 +32,7 @@ string Production::getSortString() const {
 
 string Production::getBodyString() const {
     // Als het body leeg of epsilon is, lege string return
-    if (this->getBody().empty() or (this->getBody().size() == 1 and this->getBody()[0] == "|")){
+    if (this->getBody().empty() or (this->getBody().size() == 1 and this->getBody().at(0) == "|")){
         return "";
     }
 

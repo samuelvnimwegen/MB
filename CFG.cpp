@@ -183,7 +183,7 @@ void CFG::addTerminal(const string &term) {
     auto terms = this->getTerminals();
     terms.push_back(term);
     this->setTerminals(terms);
-    assert(this->getTerminals()[this->getTerminals().size() - 1] == term);
+    assert(this->getTerminals().at(this->getTerminals().size() - 1) == term);
 }
 
 void CFG::addVariables(const string &term) {
@@ -195,7 +195,7 @@ void CFG::addVariables(const string &term) {
     auto terms = this->getVariables();
     terms.push_back(term);
     this->setVariables(terms);
-    assert(this->getVariables()[this->getVariables().size() - 1] == term);
+    assert(this->getVariables().at(this->getVariables().size() - 1) == term);
 }
 
 void CFG::addProduction(const Production& prod) {
@@ -292,17 +292,17 @@ void CFG::removeNullable() {
     cout << "  Nullables are {";
     if (!nullableTerminals.empty()){
         for (int i = 0; i < nullableTerminals.size() - 1; ++i){
-            cout << nullableTerminals[i] << ", ";
+            cout << nullableTerminals.at(i) << ", ";
         }
         if (!nullableTerminals.empty()){
-            cout << nullableTerminals[nullableTerminals.size() - 1];
+            cout << nullableTerminals.at(nullableTerminals.size() - 1);
         }
     }
     cout << "}" << endl;
 
     // Alle producties die op epsilon uitkomen verwijderen
     for (int i = 0; i < this->getProductions().size(); ++i){
-        if (this->getProductions()[i].getBody().empty()){
+        if (this->getProductions().at(i).getBody().empty()){
             productions.erase(productions.begin() + i);
             --i;
         }
@@ -317,7 +317,7 @@ void CFG::removeNullable() {
         if (subsets.size() > 1){
             // Eerste body is al aanwezig, dus we beginnen bij de 2de (index 1)
             for (int i = 1; i < subsets.size(); ++i){
-                addProduction(Production(production.getHead(), subsets[i]));
+                addProduction(Production(production.getHead(), subsets.at(i)));
             }
         }
     }
@@ -334,7 +334,7 @@ bool CFG::isNullable(vector<string> inputString) {
         return true;
     }
     // Leftmost character van de string
-    auto leftmost = inputString[0];
+    auto leftmost = inputString.at(0);
     for (const auto& production:getProductions()){
         // Als de productie uit de leftmost volgt en niet zichzelf bevat
         if (production.getHead() == leftmost and
@@ -357,7 +357,7 @@ void CFG::removeUnitPairs() {
     int n = 0;
     for (const auto& production: this->getProductions()){
         if (production.getBody().size() == 1 and
-                std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])){
+                std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody().at(0))){
             ++n;
         }
     }
@@ -377,16 +377,16 @@ void CFG::removeUnitPairs() {
         for (const auto& production : prods){
             // Als het de productie een unit productie is
             if (production.getBody().size() == 1 and
-                    std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])
+                    std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody().at(0))
                     and !std::count(unitPairs.begin(), unitPairs.end(),
-                                    make_pair(production.getHead(), production.getBody()[0]))){
-                unitPairs.emplace_back(production.getHead(), production.getBody()[0]);
+                                    make_pair(production.getHead(), production.getBody().at(0)))){
+                unitPairs.emplace_back(production.getHead(), production.getBody().at(0));
                 done = false;
 
                 // Alle producties met hetzelfde head verzamelen.
                 vector<Production> sameHeadProds;
                 for (const auto& prd: this->getProductions()){
-                    if (prd.getHead() == production.getBody()[0]){
+                    if (prd.getHead() == production.getBody().at(0)){
                         sameHeadProds.push_back(prd);
                     }
                 }
@@ -406,7 +406,7 @@ void CFG::removeUnitPairs() {
 
     cout << "  Unit pairs: {";
     for (const auto& unitProd:unitPairs){
-        if (unitProd == unitPairs[unitPairs.size() - 1]){
+        if (unitProd == unitPairs.at(unitPairs.size() - 1)){
             cout << "(" << unitProd.first << ", " << unitProd.second << ")}" << endl;
         }
         else{
@@ -418,7 +418,7 @@ void CFG::removeUnitPairs() {
     vector<Production> newProds;
     for (const auto& production: this->getProductions()){
         assert(!production.getBody().empty());
-        if (production.getBody().size() > 1 or std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody()[0])){
+        if (production.getBody().size() > 1 or std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody().at(0))){
             newProds.push_back(production);
         }
     }
@@ -544,7 +544,7 @@ void CFG::replaceBadBodies() {
                     bool alreadyProd = false;
                     for (const auto& prd: this->getProductions()){
                         // Als er al een productie is de rechtstreeks op het symbool uitkomt gebruiken we deze
-                        if (prd.getBody().size() == 1 and prd.getBody()[0] == sym){
+                        if (prd.getBody().size() == 1 and prd.getBody().at(0) == sym){
                             newBody.push_back(prd.getHead());
                             alreadyProd = true;
                         }
@@ -593,7 +593,7 @@ void CFG::breakBodies() {
                 newVars.push_back(varName);
 
                 // De 2 nieuwe producties aanmaken
-                newProds.push_back(Production(production.getHead(), {production.getBody()[0], varName}));
+                newProds.push_back(Production(production.getHead(), {production.getBody().at(0), varName}));
                 vector<string> newBody(production.getBody().begin() + 1, production.getBody().end());
                 newProds.emplace_back(varName, newBody);
             }
@@ -638,18 +638,18 @@ void CFG::makeFirst() {
                 firstProds.push_back(Production(production.getHead(), {"|"}));
             }
             // Als het eerste char van de body een terminal is: dan is dit de opl
-            else if (std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody()[0])){
-                firstProds.push_back(Production(production.getHead() ,{production.getBody()[0]}));
-                this->addFirstPair(make_pair(production.getBody()[0], production));
+            else if (std::count(this->getTerminals().begin(), this->getTerminals().end(), production.getBody().at(0))){
+                firstProds.push_back(Production(production.getHead() ,{production.getBody().at(0)}));
+                this->addFirstPair(make_pair(production.getBody().at(0), production));
             }
             // Als het eerste char een variabele is
-            else if (std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[0])){
+            else if (std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody().at(0))){
                 vector<Production> newProds;
                 for (const auto& firstProd: firstProds){
                     // Als de variabele gevonden is: de body van deze variabele als body gebruiken
-                    if (firstProd.getHead() == production.getBody()[0]){
-                        newProds.push_back(Production(production.getHead(), {firstProd.getBody()[0]}));
-                        this->addFirstPair(make_pair(firstProd.getBody()[0], production));
+                    if (firstProd.getHead() == production.getBody().at(0)){
+                        newProds.push_back(Production(production.getHead(), {firstProd.getBody().at(0)}));
+                        this->addFirstPair(make_pair(firstProd.getBody().at(0), production));
                     }
                 }
                 // Als er geen oplossingen zijn gevonden: toevoegen aan next
@@ -664,7 +664,7 @@ void CFG::makeFirst() {
                 }
             }
             else{
-                cerr << "variabele niet herkend: " << production.getBody()[0] << endl;
+                cerr << "variabele niet herkend: " << production.getBody().at(0) << endl;
             }
         }
         // Alle niet gevonden variabelen terug in de loop zetten
@@ -710,16 +710,16 @@ void CFG::makeFollow() {
             // Case 2: Er is een productie waarin het hoofd niet het laatste symbool is, maar wel voor komt
             for (const auto& production: this->getProductions()){
                 if (std::count(production.getBody().begin(), production.getBody().end(), variable)
-                    and production.getBody()[production.getBody().size() - 1] != variable){
+                    and production.getBody().at(production.getBody().size() - 1) != variable){
                     // De index opzoeken van het volgende element in de string waarin het symbool voor komt
                     int indexNext = -1;
                     for (int i = 0; i < production.getBody().size(); ++i){
-                        if (production.getBody()[i] == variable){
+                        if (production.getBody().at(i) == variable){
                             indexNext = i + 1;
                         }
                     }
                     assert(indexNext != -1);
-                    auto nextSymbolInString = production.getBody()[indexNext];
+                    auto nextSymbolInString = production.getBody().at(indexNext);
 
                     // Als het een terminal is, deze invoeren als follow
                     if (std::count(this->getTerminals().begin(), this->getTerminals().end(), nextSymbolInString)){
@@ -742,7 +742,7 @@ void CFG::makeFollow() {
             // Case 3: Als de variabele voor komt in een andere productie als laatste variabele, waarvan de variabele niet het head is
             bool case3 = true;
             for (const auto& production: this->getProductions()){
-                if (production.getHead() != variable and production.getBody().size() >= 2 and production.getBody()[production.getBody().size() - 1] == variable){
+                if (production.getHead() != variable and production.getBody().size() >= 2 and production.getBody().at(production.getBody().size() - 1) == variable){
                     // Als het head al een 'follow' heeft:
                     if (std::count(case3CompletedVars.begin(), case3CompletedVars.end(), production.getHead())){
                         // De 'follow' van het head zoeken:
@@ -766,12 +766,11 @@ void CFG::makeFollow() {
             // dan wordt er een extra body aan Follow(C) gegeven namelijk Follow(A)
             bool case4 = true;
             for (const auto& production: this->getProductions()){
-                bool lastSymIsVar = std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody()[2]);
-                if (production.getBody().size() == 3 and production.getBody()[1] == variable and lastSymIsVar){
+                if (production.getBody().size() == 3 and production.getBody().at(1) == variable and std::count(this->getVariables().begin(), this->getVariables().end(), production.getBody().at(2))){
                     // Eerst zoeken we de 'first' van het symbool na de huidige variabele
                     vector<string> firstProdBody;
                     for (const auto& firstPrd: this->getFirst()){
-                        if (firstPrd.getHead() == production.getBody()[production.getBody().size() - 1]){
+                        if (firstPrd.getHead() == production.getBody().at(production.getBody().size() - 1)){
                             firstProdBody = firstPrd.getBody();
                         }
                     }
@@ -830,7 +829,7 @@ void CFG::setLlTable(const vector<vector<string>> &llTable) {
 void CFG::makeTable() {
     // Per rij alle producties invullen die als first een terminal opleveren
     for (int i = 0; i < this->getVariables().size(); ++i){
-        auto var = this->getVariables()[i];
+        auto var = this->getVariables().at(i);
         vector<string> currentRow;
         // Elke kolom binnen de rij afgaan
         for (const auto& term: this->getTerminals()){
@@ -850,19 +849,19 @@ void CFG::makeTable() {
         currentRow.emplace_back("<ERR>"); // Dit is voor de laatste kolom, <EOS> die niet in de terminals zit.
 
         // Nu checken of epsilon of hier dus "|" in de first() zit van de huidige variabele
-        if (std::count(this->getFirst()[i].getBody().begin(), this->getFirst()[i].getBody().end(), "|")){
+        if (std::count(this->getFirst().at(i).getBody().begin(), this->getFirst().at(i).getBody().end(), "|")){
             // Loop runnen die voor elke terminal check of deze in de follow zit en als dit zo is "<ERR>" replaced met ""
             for (int j = 0; j < this->getTerminals().size(); ++j){
-                auto term = this->getTerminals()[j];
-                if (std::count(this->getFollow()[i].getBody().begin(), this->getFollow()[i].getBody().end(), term)){
-                    assert(currentRow[j] == "<ERR>"); // Dit vakje moet nog leeg zijn, anders 2 producties in zelfde vakje
-                    currentRow[j] = "";
+                auto term = this->getTerminals().at(j);
+                if (std::count(this->getFollow().at(i).getBody().begin(), this->getFollow().at(i).getBody().end(), term)){
+                    assert(currentRow.at(j) == "<ERR>"); // Dit vakje moet nog leeg zijn, anders 2 producties in zelfde vakje
+                    currentRow.at(j) = "";
                 }
             }
 
             // Nu nog als <EOS> in de follow zit, dit vakje ook naar "" omzetten
-            if (std::count(this->getFollow()[i].getBody().begin(), this->getFollow()[i].getBody().end(), "<EOS>")){
-                currentRow[currentRow.size() - 1] = "";
+            if (std::count(this->getFollow().at(i).getBody().begin(), this->getFollow().at(i).getBody().end(), "<EOS>")){
+                currentRow.at(currentRow.size() - 1) = "";
             }
         }
 
@@ -877,7 +876,7 @@ void CFG::addTableRow(const vector<string> &row) {
     auto table = this->getLlTable();
     table.push_back(row);
     this->setLlTable(table);
-    assert(this->getLlTable()[this->getLlTable().size() - 1] == row);
+    assert(this->getLlTable().at(this->getLlTable().size() - 1) == row);
 }
 
 const vector<pair<string, Production>> &CFG::getFirstPairs() const {
@@ -909,15 +908,15 @@ void CFG::printTable() {
     // Voor de kolommen met terminals + <EOS>:
     vector<string> termsAndEos = this->getTerminals();
     termsAndEos.emplace_back("<EOS>");
-    for (int i = 0; i < this->getLlTable()[0].size(); ++i){
+    for (int i = 0; i < this->getLlTable().at(0).size(); ++i){
         int colSize = 0;
         for (auto row: this->getLlTable()){
-            if (row[i].size() > colSize){
-                colSize = int(row[i].size());
+            if (row.at(i).size() > colSize){
+                colSize = int(row.at(i).size());
             }
         }
-        if (termsAndEos[i].size() > colSize){
-            colSize = int(termsAndEos[i].size());
+        if (termsAndEos.at(i).size() > colSize){
+            colSize = int(termsAndEos.at(i).size());
         }
         assert(colSize > 0);
         colWidths.push_back(colSize);
@@ -925,10 +924,10 @@ void CFG::printTable() {
 
     // Nu de table printen
     // Eerste rij bevat alle terminals + <EOS>
-    string rij1 = "  " + generateSpace(colWidths[0]) + "  | ";
+    string rij1 = "  " + generateSpace(colWidths.at(0)) + "  | ";
     for (int i = 0; i < termsAndEos.size(); ++i){
-        auto term = termsAndEos[i];
-        rij1 += term + generateSpace(colWidths[i + 1] - int(term.size())) + "  | ";
+        auto term = termsAndEos.at(i);
+        rij1 += term + generateSpace(colWidths.at(i + 1) - int(term.size())) + "  | ";
     }
     rij1.pop_back();
     cout << rij1 << endl;
@@ -947,11 +946,11 @@ void CFG::printTable() {
 
     // Nu alle rijen met variabelen
     for (int i = 0; i < this->getVariables().size(); ++i){
-        string var = this->getVariables()[i];
-        string rij = "| " + var + generateSpace(colWidths[0] - int(var.size())) + "  | ";
-        for (int j = 0; j < this->getLlTable()[i].size(); ++j){
-            auto vakje = this->getLlTable()[i][j];
-            rij += vakje + generateSpace(colWidths[j + 1] - int(vakje.size())) + "  | ";
+        string var = this->getVariables().at(i);
+        string rij = "| " + var + generateSpace(colWidths.at(0) - int(var.size())) + "  | ";
+        for (int j = 0; j < this->getLlTable().at(i).size(); ++j){
+            auto vakje = this->getLlTable().at(i).at(j);
+            rij += vakje + generateSpace(colWidths.at(j + 1) - int(vakje.size())) + "  | ";
         }
         rij.pop_back();
         cout << rij << endl;
@@ -983,9 +982,9 @@ vector<Production> sortProds(const vector<Production> &prods) {
 
 vector<Production> removeDupes(const vector<Production> &prods){
     vector<Production> newProds;
-    newProds.push_back(prods[0]);
+    newProds.push_back(prods.at(0));
     for (const auto& production: prods){
-        if (production.getHead() != newProds[newProds.size() - 1].getHead() or production.getBody() != newProds[newProds.size() - 1].getBody()){
+        if (production.getHead() != newProds.at(newProds.size() - 1).getHead() or production.getBody() != newProds.at(newProds.size() - 1).getBody()){
             newProds.push_back(production);
         }
     }
@@ -1007,7 +1006,7 @@ void makeNullableSubsets(vector<vector<string>> &subsets, const vector<string> &
 
     for (int i = 0; i < current.size(); ++i){
         // Als het character nullable is
-        if (std::count(nullables.begin(), nullables.end(), current[i])){
+        if (std::count(nullables.begin(), nullables.end(), current.at(i))){
             auto copy = current;
             copy.erase(copy.begin() + i);
             makeNullableSubsets(subsets, nullables, copy);
@@ -1043,7 +1042,7 @@ string breakBodyName(const string &head, const vector<string> &vars) {
 
 Production mergeProductions(const vector<Production> &productions) {
     assert(!productions.empty());
-    string productionHead = productions[0].getHead();
+    string productionHead = productions.at(0).getHead();
     vector<string> mergedBody;
     for (const auto& production: productions){
         mergedBody.insert(mergedBody.end(), production.getBody().begin(), production.getBody().end());
