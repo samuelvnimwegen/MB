@@ -1,8 +1,6 @@
-<<<<<<< Updated upstream
+
 
 *.log
+.idea/
 /cmake-build-debug/
-/cmake-build-debug/Testing/
-=======
-/cmake-build-debug/
->>>>>>> Stashed changes
+
